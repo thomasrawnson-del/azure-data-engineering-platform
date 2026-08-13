@@ -1,0 +1,5 @@
+project:
+  name: azure-data-engineering-platform
+
+data:
+  orders_file: data/sample/orders.csv

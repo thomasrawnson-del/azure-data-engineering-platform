@@ -1,5 +1,8 @@
 import pandas as pd
 
+from src.utils.config import load_config
+
+
 def load_orders(file_path: str) -> pd.DataFrame:
     """Load order data from a CSV file."""
 
@@ -9,7 +12,14 @@ def load_orders(file_path: str) -> pd.DataFrame:
 
     return df
 
+
 if __name__ == "__main__":
-    orders = load_orders("data/sample/orders.csv")
+    config = load_config()
+
+    orders_file = config["data"]["orders_file"]
+
+    print(f"Loading orders from: {orders_file}")
+
+    orders = load_orders(orders_file)
 
     print(orders.head())
