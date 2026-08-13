@@ -1,48 +1,61 @@
+import logging
 import pandas as pd
 
+from src.utils.logging_config import configure_logging
 from src.validation.order_validation import validate_orders
+
+
+logger = logging.getLogger(__name__)
 
 
 def run_validation(input_file: str) -> None:
     """Run data quality validation against an orders file."""
 
-    print(f"Reading orders from: {input_file}")
+    logger.info("Starting validation pipeline")
 
-    orders = pd.read_csv(input_file)
+    logger.info("Reading orders from %s", input_file)
 
-    print(f"Records received: {len(orders)}")
+    try:
+        orders = pd.read_csv(input_file)
+
+    except FileNotFoundError:
+        logger.error("Input file not found: %s", input_file)
+        raise
+
+    logger.info("Records received: %d", len(orders))
 
     valid_orders, invalid_orders = validate_orders(orders)
 
-    print(f"Valid records: {len(valid_orders)}")
-    print(f"Invalid records: {len(invalid_orders)}")
+    logger.info("Valid records: %d", len(valid_orders))
+    logger.info("Invalid records: %d", len(invalid_orders))
 
-    
+    if len(invalid_orders) > 0:
+        logger.warning(
+            "Data quality issues detected: %d invalid records",
+            len(invalid_orders),
+        )
+
+        for _, row in invalid_orders.iterrows():
+            logger.warning(
+                "Order %s: %s",
+                row["order_id"],
+                row["validation_error"],
+            )
+
     valid_orders.to_csv(
-    "data/processed/valid/orders_valid.csv",
-    index=False,
+        "data/processed/valid/orders_valid.csv",
+        index=False,
     )
 
     invalid_orders.to_csv(
-    "data/processed/quarantine/orders_invalid.csv",
-    index=False,
+        "data/processed/quarantine/orders_invalid.csv",
+        index=False,
     )
 
-    print("\nValidation results written to:")
-    print("  data/processed/valid/orders_valid.csv")
-    print("  data/processed/quarantine/orders_invalid.csv")
-
-    if len(invalid_orders) > 0:
-        print("\nValidation errors:")
-
-        for _, row in invalid_orders.iterrows():
-            print(
-                f"Order {row['order_id']}: "
-                f"{row['validation_error']}"
-            )
-
+    logger.info("Validation results written successfully")
 
 if __name__ == "__main__":
+    configure_logging()
 
     run_validation(
         "data/sample/orders_with_errors.csv"
