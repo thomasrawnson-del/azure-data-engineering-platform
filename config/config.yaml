@@ -1,5 +1,9 @@
 project:
-  name: azure-data-engineering-platform
+  name: aws-data-engineering-platform
 
 data:
   orders_file: data/sample/orders.csv
+
+aws:
+  region: eu-west-2
+  bucket: tom-data-engineering-platform
