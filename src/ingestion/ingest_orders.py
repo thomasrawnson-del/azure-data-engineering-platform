@@ -32,7 +32,7 @@ def build_bronze_key(
     )
 
 
-def ingest_orders() -> None:
+def ingest_orders() -> str:
     """Load orders and upload the source file to S3 Bronze."""
 
     config = load_config()
@@ -59,6 +59,8 @@ def ingest_orders() -> None:
         f"Bronze ingestion complete: "
         f"s3://{config['aws']['bucket']}/{bronze_key}"
     )
+    
+    return bronze_key
 
 
 if __name__ == "__main__":

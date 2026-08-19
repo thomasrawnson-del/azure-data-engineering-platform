@@ -2,7 +2,7 @@ project:
   name: aws-data-engineering-platform
 
 data:
-  orders_file: data/sample/orders.csv
+  orders_file: data/sample/orders_with_errors.csv
 
 aws:
   region: eu-west-2
