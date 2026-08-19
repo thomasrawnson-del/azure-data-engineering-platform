@@ -1,7 +1,8 @@
 import logging
 import pandas as pd
-
 from src.utils.logging_config import configure_logging
+from src.utils.s3 import upload_dataframe
+from src.validation.order_validation import validate_orders
 from src.validation.order_validation import validate_orders
 
 
@@ -12,7 +13,6 @@ def run_validation(input_file: str) -> None:
     """Run data quality validation against an orders file."""
 
     logger.info("Starting validation pipeline")
-
     logger.info("Reading orders from %s", input_file)
 
     try:
@@ -42,6 +42,7 @@ def run_validation(input_file: str) -> None:
                 row["validation_error"],
             )
 
+    # Keep the local outputs for development/testing
     valid_orders.to_csv(
         "data/processed/valid/orders_valid.csv",
         index=False,
@@ -50,6 +51,18 @@ def run_validation(input_file: str) -> None:
     invalid_orders.to_csv(
         "data/processed/quarantine/orders_invalid.csv",
         index=False,
+    )
+
+    # Upload Silver data to S3
+    upload_dataframe(
+        valid_orders,
+        "silver/orders/orders_valid.csv",
+    )
+
+    # Upload invalid records to S3 Quarantine
+    upload_dataframe(
+        invalid_orders,
+        "quarantine/orders/orders_invalid.csv",
     )
 
     logger.info("Validation results written successfully")
