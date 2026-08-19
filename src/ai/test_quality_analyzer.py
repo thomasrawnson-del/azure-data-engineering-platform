@@ -15,7 +15,10 @@ def test_quality_analyzer_detects_invalid_orders():
         }
     )
 
-    insights = analyze_quality_issues(orders)
+    insights = analyze_quality_issues(
+        orders,
+        use_ai=False,
+)   
 
     assert len(insights) == 3
 

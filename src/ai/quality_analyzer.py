@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+from src.ai.bedrock_client import invoke_bedrock
+
 
 @dataclass
 class QualityInsight:
@@ -11,16 +13,10 @@ class QualityInsight:
     recommendation: str
 
 
-def analyze_quality_issues(
+def _build_rule_based_insights(
     invalid_orders: pd.DataFrame,
 ) -> list[QualityInsight]:
-    """
-    Analyse validation errors and produce data quality insights.
-
-    This is the initial implementation of the AI analysis interface.
-    The underlying analysis is rule-based so that the pipeline remains
-    deterministic and does not require an external LLM service.
-    """
+    """Identify data quality issues using deterministic rules."""
 
     insights: list[QualityInsight] = []
 
@@ -130,3 +126,103 @@ def analyze_quality_issues(
         )
 
     return insights
+
+
+def _build_ai_prompt(
+    insights: list[QualityInsight],
+) -> str:
+    """Build a prompt for Bedrock using the detected quality issues."""
+
+    issue_text = "\n".join(
+        (
+            f"- Category: {insight.category}\n"
+            f"  Severity: {insight.severity}\n"
+            f"  Affected records: {insight.affected_records}\n"
+            f"  Current recommendation: {insight.recommendation}"
+        )
+        for insight in insights
+    )
+
+    return f"""
+You are a senior data engineer reviewing a data quality report.
+
+Review the following detected data quality issues:
+
+{issue_text}
+
+For each issue, provide an improved practical recommendation for
+resolving the problem in the source data pipeline.
+
+Keep the recommendations concise and actionable.
+
+Do not invent data or change the category, severity, or number of
+affected records.
+
+Return only a numbered list of recommendations.
+""".strip()
+
+
+def _enhance_with_ai(
+    insights: list[QualityInsight],
+) -> list[QualityInsight]:
+    """Use Amazon Bedrock to improve quality recommendations."""
+
+    if not insights:
+        return insights
+
+    prompt = _build_ai_prompt(insights)
+
+    try:
+        response = invoke_bedrock(prompt)
+
+    except Exception as exc:
+        print(
+            f"Bedrock analysis unavailable; "
+            f"using rule-based recommendations: {exc}"
+        )
+        return insights
+
+    recommendations = [
+        line.strip()
+        for line in response.splitlines()
+        if line.strip()
+    ]
+
+    enhanced_insights: list[QualityInsight] = []
+
+    for index, insight in enumerate(insights):
+        recommendation = insight.recommendation
+
+        if index < len(recommendations):
+            recommendation = recommendations[index]
+
+        enhanced_insights.append(
+            QualityInsight(
+                category=insight.category,
+                severity=insight.severity,
+                affected_records=insight.affected_records,
+                recommendation=recommendation,
+            )
+        )
+
+    return enhanced_insights
+
+
+def analyze_quality_issues(
+    invalid_orders: pd.DataFrame,
+    use_ai: bool = True,
+) -> list[QualityInsight]:
+    """
+    Analyse validation errors and produce data quality insights.
+
+    Deterministic rules identify the issues. Amazon Bedrock can then
+    improve the recommendations. If Bedrock is unavailable, the
+    deterministic recommendations are returned instead.
+    """
+
+    insights = _build_rule_based_insights(invalid_orders)
+
+    if not use_ai:
+        return insights
+
+    return _enhance_with_ai(insights)
