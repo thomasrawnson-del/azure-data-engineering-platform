@@ -1,36 +1,59 @@
-# Azure Data Engineering Platform
+# AWS Data Engineering Platform
 
-An end-to-end data engineering project demonstrating Python, SQL,
-Azure cloud services, data quality, orchestration, CI/CD and AI.
+An end-to-end data engineering project demonstrating modern data ingestion,
+data quality, cloud storage, transformation, orchestration, testing and
+analytics using Python, AWS S3 and Dagster.
 
 ## Project Status
 
-🚧 In development
+- In development
+
+The core data pipeline, AWS S3 data lake and Dagster orchestration are
+currently implemented.
 
 ## Architecture
 
-Coming soon.
-
-## Technologies
-
-- Python
-- SQL
-- Azure
-- Azure Data Lake Storage Gen2
-- Azure Data Factory
-- Azure SQL
-- Power BI
-- GitHub Actions
-- AI/LLM
-
-## Project Goals
-
-This project demonstrates the design and implementation of a modern
-cloud-based data engineering platform.
-
-The platform will ingest data from multiple sources, store and
-transform the data using Azure services, perform automated data
-quality checks, and provide analytical outputs.
-
-An AI component will be incorporated to assist with data quality
-analysis and reporting.
+```text
+                         ┌──────────────────┐
+                         │   Source Orders  │
+                         │     CSV File     │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │     Dagster      │
+                         │   Orchestration  │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                    ┌─────────────────────────┐
+                    │        AWS S3            │
+                    │                         │
+                    │       Bronze            │
+                    │   Raw orders data       │
+                    └────────────┬────────────┘
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │     Data Validation     │
+                    │                         │
+                    │ • Duplicate IDs         │
+                    │ • Missing customers     │
+                    │ • Invalid dates         │
+                    │ • Invalid quantities    │
+                    │ • Invalid prices        │
+                    └────────────┬────────────┘
+                                 │
+                      ┌──────────┴──────────┐
+                      │                     │
+                      ▼                     ▼
+             ┌────────────────┐    ┌─────────────────┐
+             │     Silver     │    │   Quarantine    │
+             │  Valid orders  │    │ Invalid records │
+             └───────┬────────┘    └─────────────────┘
+                     │
+                     ▼
+             ┌────────────────────┐
+             │       Gold         │
+             │ Daily Product Sales│
+             └────────────────────┘
