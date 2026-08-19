@@ -1,7 +1,10 @@
 import pandas as pd
 
 from src.utils.config import load_config
-from src.utils.s3 import upload_dataframe
+from src.utils.s3 import (
+    download_dataframe,
+    upload_dataframe,
+)
 
 
 def build_sales_summary(df: pd.DataFrame) -> pd.DataFrame:
@@ -37,9 +40,9 @@ def build_gold() -> None:
 
     config = load_config()
 
-    silver_file = "data/processed/valid/orders_valid.csv"
+    silver_key = "silver/orders/orders_valid.csv"
 
-    orders = pd.read_csv(silver_file)
+    orders = download_dataframe(silver_key)
 
     gold = build_sales_summary(orders)
 

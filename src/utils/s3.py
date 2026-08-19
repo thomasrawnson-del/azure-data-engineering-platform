@@ -88,3 +88,18 @@ def upload_dataframe(
         f"Uploaded DataFrame to "
         f"s3://{bucket_name}/{s3_key}"
     )
+
+def download_dataframe(s3_key: str) -> pd.DataFrame:
+    """Download a CSV file from S3 into a Pandas DataFrame."""
+
+    config = load_config()
+    bucket_name = config["aws"]["bucket"]
+
+    s3 = get_s3_client()
+
+    response = s3.get_object(
+        Bucket=bucket_name,
+        Key=s3_key,
+    )
+
+    return pd.read_csv(response["Body"])
