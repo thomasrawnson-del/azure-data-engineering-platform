@@ -8,6 +8,7 @@ from src.ingestion.ingest_orders import build_bronze_key, ingest_orders
 from src.utils.config import load_config
 from src.utils.s3 import download_dataframe, upload_dataframe
 from src.validation.order_validation import validate_orders
+from src.ai.quality_report import build_quality_report
 
 
 def get_bronze_key() -> str:
@@ -155,6 +156,23 @@ def gold_sales() -> None:
         "gold/sales/daily_product_sales.csv",
     )
 
+@dg.asset(
+    deps=[silver_orders],
+)
+def ai_quality_report() -> None:
+    """Analyse quarantined records and create a data quality report."""
+
+    invalid_orders = download_dataframe(
+        "quarantine/orders/orders_invalid.csv"
+    )
+
+    report = build_quality_report(invalid_orders)
+
+    upload_dataframe(
+        report,
+        "gold/data_quality/quality_report.csv",
+    )
+
 daily_pipeline_schedule = dg.ScheduleDefinition(
     name="daily_pipeline_schedule",
     cron_schedule="0 6 * * *",
@@ -165,6 +183,7 @@ defs = dg.Definitions(
     assets=[
         bronze_orders,
         silver_orders,
+        ai_quality_report,
         gold_sales,
     ],
     asset_checks=[
