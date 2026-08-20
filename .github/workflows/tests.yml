@@ -78,6 +78,14 @@ jobs:
               print(f"{key}: {claims.get(key)}")
           PY
 
+
+      - name: Check GitHub workflow context
+        run: |
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Ref: $GITHUB_REF"
+          echo "Event: $GITHUB_EVENT_NAME"
+          echo "Actor: $GITHUB_ACTOR"
+          
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
