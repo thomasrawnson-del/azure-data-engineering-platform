@@ -9,3 +9,9 @@ variable "bucket_name" {
   type        = string
   default     = "tom-data-engineering-platform"
 }
+
+variable "github_repository" {
+  description = "GitHub repository allowed to assume the deployment role."
+  type        = string
+  default     = "thomasrawnson/aws-data-engineering-platform"
+}
