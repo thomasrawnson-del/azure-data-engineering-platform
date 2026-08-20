@@ -44,13 +44,46 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check GitHub workflow context
+      - name: Inspect OIDC token claims
+        timeout-minutes: 1
         run: |
-          echo "Repository: $GITHUB_REPOSITORY"
-          echo "Ref: $GITHUB_REF"
-          echo "Event: $GITHUB_EVENT_NAME"
-          echo "Actor: $GITHUB_ACTOR"
+          python - <<'PY'
+          import os
+          import json
+          import base64
+          import urllib.request
 
+          url = os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"]
+          token = os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]
+
+          request = urllib.request.Request(
+              url + "&audience=sts.amazonaws.com",
+              headers={
+                  "Authorization": f"bearer {token}"
+              },
+          )
+
+          with urllib.request.urlopen(request, timeout=10) as response:
+              data = json.load(response)
+
+          jwt = data["value"]
+          payload = jwt.split(".")[1]
+          payload += "=" * (-len(payload) % 4)
+
+          claims = json.loads(
+              base64.urlsafe_b64decode(payload)
+          )
+
+          for key in [
+              "iss",
+              "aud",
+              "sub",
+              "repository",
+              "ref",
+          ]:
+              print(f"{key}: {claims.get(key)}")
+          PY
+          
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
