@@ -83,12 +83,14 @@ jobs:
           ]:
               print(f"{key}: {claims.get(key)}")
           PY
-          
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::302726986384:role/aws-data-engineering-platform-github-actions
           aws-region: eu-west-2
+          role-session-name: github-actions-debug
+          retry-max-attempts: 1
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
